@@ -1,0 +1,11 @@
+server/bin/intermediates/
+client/bin/intermediates/
+bin/intermediates/
+coin-collect/bin/intermediates/
+.vs/
+**/ipch/
+*.ipch
+
+**/bin/
+**/obj/
+**/intermediates/

@@ -1,0 +1,90 @@
+digraph CoinCollectorArchitecture {
+    // Blue -> client 1 Traffic
+    // Red -> client 2 Traffic
+    // graph settings
+    rankdir=TB;
+    node [shape=box, style=rounded];
+    edge [fontsize=10];
+
+    // title
+    labelloc="t";
+    label="Coin Collector - Multiplayer Architecture \n Client-Side Interpolation";
+    fontsize=16;
+
+    // server components
+    subgraph cluster_server {
+        label="Server (Authoritative)";
+        style=filled;
+        color=lightblue;
+
+        server_start [label="Server Start\nListen on :55555"];
+        server_wait [label="Wait for\n2 Clients"];
+        game_state [label="Game State\n- Player Positions\n- Coin Position\n- Scores", shape=cylinder];
+        validate_move [label="Validate Movement\n- Boundary Check\n- Collision Check"];
+        update_state [label="Update State\n- Move Player\n- Update Score\n- Spawn Coin"];
+        broadcast [label="Broadcast State\n(200ms latency)"];
+    }
+
+    // client 1
+    subgraph cluster_client1 {
+        label="Client 1 (Player 1)";
+        style=filled;
+        color=lightgreen;
+
+        c1_start [label="Connect to\nServer"];
+        c1_wait [label="Wait for\nGame Start"];
+        c1_input [label="Arrow Key\nInput"];
+        c1_send [label="Send Command\n(U/D/L/R)"];
+        c1_recv [label="Receive State\n(200ms delay)"];
+        c1_interp [label="Interpolate\nPositions"];
+        c1_render [label="Render at 60 FPS\nSDL3"];
+    }
+
+    // client 2
+    subgraph cluster_client2 {
+        label="Client 2 (Player 2)";
+        style=filled;
+        color=lightyellow;
+
+        c2_start [label="Connect to\nServer"];
+        c2_wait [label="Wait for\nGame Start"];
+        c2_input [label="Arrow Key\nInput"];
+        c2_send [label="Send Command\n(U/D/L/R)"];
+        c2_recv [label="Receive State\n(200ms delay)"];
+        c2_interp [label="Interpolate\nPositions"];
+        c2_render [label="Render at 60 FPS\nSDL3"];
+    }
+
+    // server flow
+    server_start -> server_wait;
+    server_wait -> game_state [label="Both connected"];
+    game_state -> validate_move [label="Receive input"];
+    validate_move -> update_state [label="Valid"];
+    validate_move -> broadcast [label="Invalid\n(no change)", style=dashed];
+    update_state -> game_state;
+    game_state -> broadcast;
+
+    // client 1 flow
+    c1_start -> c1_wait;
+    c1_wait -> c1_input [label="Game started"];
+    c1_input -> c1_send [label="Key pressed"];
+    c1_send -> validate_move [label="TCP", color=blue];
+    broadcast -> c1_recv [label="TCP + 200ms", color=blue];
+    c1_recv -> c1_interp [label="Parse state"];
+    c1_interp -> c1_render [label="Smooth positions"];
+    c1_render -> c1_input [label="Loop"];
+
+    // client 2 flow
+    c2_start -> c2_wait;
+    c2_wait -> c2_input [label="Game started"];
+    c2_input -> c2_send [label="Key pressed"];
+    c2_send -> validate_move [label="TCP", color=red];
+    broadcast -> c2_recv [label="TCP + 200ms", color=red];
+    c2_recv -> c2_interp [label="Parse state"];
+    c2_interp -> c2_render [label="Smooth positions"];
+    c2_render -> c2_input [label="Loop"];
+
+    // connection establishment
+    c1_start -> server_wait [label="TCP Connect", color=blue];
+    c2_start -> server_wait [label="TCP Connect", color=red];
+}
