@@ -52,6 +52,9 @@ A realtime multiplayer game demonstrating client-server architecture with networ
 2. Build configuration: Release or Debug
 3. Build the project (Ctrl+Shift+B)
 
+Project Configuration:
+![Visual studio project config](/project_config.png)
+
 ### Client Setup
 1. Download SDL3 and extract to `C:\SDL\` (or update paths in project settings)
 2. Open `client` project in Visual Studio
